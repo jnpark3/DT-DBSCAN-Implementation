@@ -25,10 +25,22 @@ public class DTDBSCAN {
     public static void clusterOut( double[] coords, int[] labels, int size, String fname ) throws Exception {
         PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter( fname )));
 
-        for( int i = 0; i < size; i++){
-            out.print( coords[2 * i] + "," + coords[2 * i + 1] + "," );
-            if ( labels == null ) out.println( "0" );
-            else out.println( labels[i] );
+        int max = 0;
+        for(int i = 0; i < labels.length; i++){
+            if(labels[i] > max)
+                max = labels[i];
+        }
+
+        for(int i = 0; i <= max; i++){
+            for(int j = 0; j < labels.length; j++){
+                if(labels[j] == i){
+                    out.println( "(" + coords[2 * j] + "," + coords[2 * j + 1] + ")" );
+                }
+            }
+            out.println();
+            out.println();
+            out.println();
+            out.println();
         }
 
         out.close();
@@ -56,7 +68,7 @@ public class DTDBSCAN {
         finish = System.currentTimeMillis();                            //Measure Time Finish
         System.out.println( Long.toString( finish - start )) ;
 
-        clusterOut( coordinates, labels, N, "cluster0.out" );        
+        clusterOut( coordinates, labels, N, "clusterDTDBSCAN.out" );        
     }
 
     public static int[] runClustering( double[] vertices, int N, int EPSILON, int MINPTS, Boolean verbose ) throws Exception {
