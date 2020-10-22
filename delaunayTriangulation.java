@@ -2,8 +2,7 @@ import java.util.*;
 
 public class delaunayTriangulation extends DTDBSCAN{
 
-    // Delaunay Triangulation Algorithm in Linear Expected Time [Katajainen &
-    // Kopinen 1988]
+    // Implementation of Delaunay Triangulation Algorithm in Linear Expected Time from [Katajainen & Kopinen 1988]
 
     public static class Triangulation {
 
@@ -19,8 +18,10 @@ public class delaunayTriangulation extends DTDBSCAN{
         }
     }
 
+    // This method triangulates the set Points given the grid partitioning of Points
+
     public static ArrayList<ArrayList<Integer>> triangulation(ArrayList<ArrayList<ArrayList<Integer>>> grid,
-            Point[] Points, int N) { // Computes Katajainen Koppinen O(n) triangulation*
+            Point[] Points, int N) {
 
         if (Points.length == 0) { // Eliminate case where points set is empty
             ArrayList<ArrayList<Integer>> Adjacency = new ArrayList<ArrayList<Integer>>();
@@ -28,7 +29,7 @@ public class delaunayTriangulation extends DTDBSCAN{
         }
 
         int K = (int) Math.pow(4, (int) (Math.log(N) / Math.log(4)) + 1);
-        int[] Morton = morton_order(K, (int) Math.sqrt(K));
+        int[] Morton = morton_order(K);
 
         Triangulation[] Trigs = new Triangulation[K];
 
@@ -62,8 +63,10 @@ public class delaunayTriangulation extends DTDBSCAN{
         return Adjacency;
     }
 
+    //This method calculates the triangulation of the set of points in each grid space
+
     public static Triangulation gridInsert(ArrayList<ArrayList<Integer>> Adjacency, Point[] orderedPoints,
-            ArrayList<Integer> gridPoints) { // returns triangulation for grid [primitive]**
+            ArrayList<Integer> gridPoints) {
 
         Triangulation result = new Triangulation();
 
@@ -73,8 +76,7 @@ public class delaunayTriangulation extends DTDBSCAN{
             return result;
         }
 
-        result.min_index = result.left = result.right = result.bottom = result.top = gridPoints.get(0); // calculate
-                                                                                                        // result.right/left/top/bottom
+        result.min_index = result.left = result.right = result.bottom = result.top = gridPoints.get(0); 
         result.max_index = gridPoints.get(gridPoints.size() - 1);
 
         for (int i : gridPoints) {
@@ -213,11 +215,9 @@ public class delaunayTriangulation extends DTDBSCAN{
         return result;
     }
 
-    public static int[] hullCalc(Point[] Points, Triangulation T1, Triangulation T2, Boolean vertical) { // output the
-                                                                                                         // top and
-                                                                                                         // bottom
-                                                                                                         // convex hull
-                                                                                                         // edges **
+    //This method returns the convex hull when T1 and T2 are merged 
+
+    public static int[] hullCalc(Point[] Points, Triangulation T1, Triangulation T2, Boolean vertical) { 
 
         if (T1.right == -1 || T2.right == -1) { // resolve when Trig1 or Trig2 are empty
             int[] results = new int[4 + T2.convex.length + T1.convex.length];
@@ -271,9 +271,7 @@ public class delaunayTriangulation extends DTDBSCAN{
                     correct = true;
             } else {
                 double Y;
-                double slope = slope(Points[T1.convex[p1_index]], Points[T2.convex[p2_index]], false); // Slope
-                                                                                                       // identically
-                                                                                                       // define twice
+                double slope = slope(Points[T1.convex[p1_index]], Points[T2.convex[p2_index]], false); 
                 Y = (slope * (Points[T1.convex[c1_index]].x - Points[T1.convex[p1_index]].x))
                         + Points[T1.convex[p1_index]].y;
                 if (slope < 0 && Y > Points[T1.convex[c1_index]].y)
@@ -292,10 +290,7 @@ public class delaunayTriangulation extends DTDBSCAN{
                         correct = true;
                 } else {
                     double Y;
-                    double slope = slope(Points[T1.convex[p1_index]], Points[T2.convex[p2_index]], false); // Slope
-                                                                                                           // identically
-                                                                                                           // defined
-                                                                                                           // twice
+                    double slope = slope(Points[T1.convex[p1_index]], Points[T2.convex[p2_index]], false); 
                     Y = (slope * (Points[T2.convex[c2_index]].x - Points[T1.convex[p1_index]].x))
                             + Points[T1.convex[p1_index]].y;
                     if (slope < 0 && Y > Points[T2.convex[c2_index]].y)
@@ -338,7 +333,7 @@ public class delaunayTriangulation extends DTDBSCAN{
             }
         }
 
-        if (vertical) { // computing result[3] and result[4]
+        if (vertical) { 
             point1 = T1.bottom;
             point2 = T2.top;
         } else {
@@ -530,6 +525,8 @@ public class delaunayTriangulation extends DTDBSCAN{
         return return_Solution;
     }
 
+    //This method merges Triangulations T1 and T2 using information regarding the convex Hull
+
     public static Triangulation mergeTrigs(ArrayList<ArrayList<Integer>> Adjacency, Point[] Points, int[] Hull,
             Triangulation T1, Triangulation T2, Boolean vertical) {
 
@@ -627,10 +624,10 @@ public class delaunayTriangulation extends DTDBSCAN{
                 }
             }
 
-            int index = index_R + 1; // Right Analysis Set up
+            int index = index_R + 1;
             if (index >= Adjacency.get(R).size())
                 index = 0;
-            int R1 = Adjacency.get(R).get(index); // Right Analysis
+            int R1 = Adjacency.get(R).get(index);
 
             boolean condition1 = angle(Points[L], Points[R]) > angle(Points[L], Points[R1]);
             boolean condition2 = angle(Points[L], Points[R1]) > angle(Points[L], Points[R]) - 180;
@@ -663,10 +660,10 @@ public class delaunayTriangulation extends DTDBSCAN{
             } else
                 leftStay = true;
 
-            int index2 = index_L - 1; // Left Analysis Set-Up
+            int index2 = index_L - 1;
             if (index2 < 0)
                 index2 = Adjacency.get(L).size() - 1;
-            int L1 = Adjacency.get(L).get(index2); // Left Analysis
+            int L1 = Adjacency.get(L).get(index2);
 
             boolean condition4 = angle(Points[R], Points[L]) < angle(Points[R], Points[L1]);
             boolean condition5 = angle(Points[R], Points[L1]) - 180 < angle(Points[R], Points[L]);
@@ -759,8 +756,11 @@ public class delaunayTriangulation extends DTDBSCAN{
         return T3;
     }
 
-    public static double angle(Point a, Point b) { // calculates angle from a to b starting at positive y-axis and going
-        // clockwise[**]
+    //Auxilirary Methods
+
+    //This method calculates angle from a to b starting at positive y-axis and going clockwise
+
+    public static double angle(Point a, Point b) { 
         if (a.x == b.x) {
             if (a.y > b.y)
                 return 180;
@@ -778,8 +778,9 @@ public class delaunayTriangulation extends DTDBSCAN{
         }
     }
 
-    public static boolean inside(Point a, Point b, Point c, Point d) { // Check if point a is in circumcircle of
-                                                                       // triangle bcd[**]
+    //This method checks if point a is in circumcircle of triangle bcd
+
+    public static boolean inside(Point a, Point b, Point c, Point d) { 
 
         if (a.x == b.x && a.y == b.y) // Resolve cases were two points are same
             return false;
@@ -816,11 +817,15 @@ public class delaunayTriangulation extends DTDBSCAN{
         return false;
     }
 
-    public static double dist(Point a, Point b) { // Return euclidian distance between Points a and b
+    //This method returns euclidian distance between Points a and b
+
+    public static double dist(Point a, Point b) { 
         return Math.pow(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2), 0.5);
     }
 
-    public static double slope(Point a, Point b, boolean inverse) { // Return slope line ab
+    //This method returns slope of line ab
+
+    public static double slope(Point a, Point b, boolean inverse) { 
         if ((a.x == b.x && !inverse) || (a.y == b.y && inverse)) {
             System.out.println(" NOTE: slope value approximated to double.max");
             return Double.MAX_VALUE;

@@ -1,7 +1,7 @@
 import java.util.*;
 import java.io.*;
 
-public class DTDBSCAN {
+public class DTDBSCAN{
 
     public static class Triangulation {
 
@@ -28,18 +28,33 @@ public class DTDBSCAN {
 
     public static void main(String[] args) throws Exception {
 
-        BufferedReader f = new BufferedReader(new FileReader("dataGenerator.in"));  // Read file data.in
-        int N = Integer.parseInt(f.readLine());                                     // Set N as size of dataset
+        BufferedReader f = new BufferedReader(new FileReader("data.in"));  // Read file data.in
+
+        // Option 1: Generate Point set using coordinate information from data.in
+
+        /*                                                                 
+
+        int N = Integer.parseInt(f.readLine());                            // Set N as size of dataset
         Point[] points = new Point[N];
 
-        for (int i = 0; i < N; i++) {                                               // Generate Point set using coordinate information from data.in
+        for (int i = 0; i < N; i++) {                                               
             Point P = new Point();
             P.x = Double.parseDouble(f.readLine());
             P.y = Double.parseDouble(f.readLine());
             points[i] = P;
         }
 
-        runClustering(points, 1000, 10, 10);                                        // Run DTDBSCAN Clustering algorithm
+        */
+
+        // Option 2: Generate Point set using dataGenerator method (for experimentation)
+
+        int N = 2000;                                                     // Set N as size of dataset
+
+        Point[] points = dataDgenerator(N, 0.2);                          // Set second variable to 0 for Uniform Distribution, 0.359 for r=2, 0.834 for r=10, 0.965 for r=50, and 1 for no noise
+
+        //Run Clustering
+
+        System.out.println(runClustering(points, N, Math.sqrt(1000000.0/(Math.PI * N)), 10));   // Run DTDBSCAN Clustering algorithm and output runtime in milliseconds
 
         f.close();
     }
@@ -104,7 +119,8 @@ public class DTDBSCAN {
             grid.get(x).get(y).add(i);
         }
 
-        int[] morton = morton_order(gridSpaces, gridSize);                          
+        int[] morton = morton_order(gridSpaces);      
+
         Point[] points = new Point[N];                                              
         int n = 0;                                                                  
 
@@ -116,7 +132,7 @@ public class DTDBSCAN {
             }
         }
 
-        // Step 2: Linear Time Delaunay Triangulation:
+        // Step 2: Linear Time Delaunay Triangulation; Contained in delaunayTriangulation.java
         //      - Outlined in [Katajainen & Koppinen 1988]
         //      - Triangulates the points in each grid space
         //      - Merges the triangulations in the grid spaces in a quad-tree order to form completed Triangulation
@@ -196,12 +212,19 @@ public class DTDBSCAN {
 
         finish = (int) System.currentTimeMillis();                                  // Measure Time Finish
 
-        //clusterOut(points, clusters, N, "clusterDTDBSCAN.out");                   // Outputs clusters to clusterDTDBSCAN.out
+        clusterOut(points, clusters, "clusterDTDBSCAN.out");                     // Outputs clusters to clusterDTDBSCAN.out
 
         return finish - start;
     }
 
-    // Note: Annotations are incomplete beyond this point
+    /*
+    * This method computes F(DT(V), p, epsilon, minPts) for some vertex p in V, which can be used to determine whether or not p is a core point; Algorithm 1 from paper
+    *   Parameter Points - array of Points
+    *   Parameter Adjacency - adjacency list for the Delaunay triangulation graph of V
+    *   Parameter a - integer denoting the index of point p within array Points
+    *   Parameter epsilon - a constant used in DBSCAN to determine clusters
+    *   Parameter minPts - a constant used in DBSCAN to determine clusters
+    */
 
     public static ArrayList<Integer> classifyCorePoints(Point[] Points, ArrayList<ArrayList<Integer>> Adjacency, int a,
             double epsilon, int minPts) {
@@ -218,13 +241,13 @@ public class DTDBSCAN {
             int check = query.get(query.size() - 1);
             query.remove(query.size() - 1);
 
-            Boolean condition = false;
+            Boolean inFinished = false;
             for (int num : finished)
                 if (num == check) {
-                    condition = true;
+                    inFinished = true;
                     break;
                 }
-            if (condition)
+            if (inFinished)
                 continue;
             if (dist(Points[a], Points[check]) > epsilon)
                 continue;
@@ -240,7 +263,13 @@ public class DTDBSCAN {
 
     // Auxiliary functions
 
-    public static Point[] dataDgenerator(int k) throws Exception {
+    /*
+    * This method generates point sets
+    *   Parameter k - integer denoting the size of dataset to be generated
+    *   Parameter c - double which alters the density ratio between the clusters and the noise
+    */
+
+    public static Point[] dataDgenerator(int k, double c) throws Exception {
         Point[] solution = new Point[k];
         double[] centers = new double[14];
         for(int i = 0; i < 14; i++){
@@ -248,7 +277,7 @@ public class DTDBSCAN {
         }
         for(int i = 0; i < k; i++){
             Point in = new Point();
-            if(Math.random()<1){   // Set to 0 for r=0, 0.359 for r=2, 0.834 for r=10, and 0.965 for r=50
+            if(Math.random() < c){
                 int rand = (int)(7*Math.random());
                 in.x = centers[2*rand] + Math.random()*200 - 100;
                 in.y = centers[2*rand+1] + Math.random()*200 - 100;
@@ -262,7 +291,14 @@ public class DTDBSCAN {
         return solution;
     }
 
-    public static void clusterOut(Point[] Points, int[] clusters, int size, String fname) throws Exception { 
+    /*
+    * This method outputs clustering results, where clusters are separated by enters (Note: not neccessarily O(n) when number of clusters is large; not considered a part of DT-DBSCAN Algorithm)
+    *   Parameter Points - Set of points
+    *   Parameter Clusters - Cluster labels of each point
+    *   Parameter fname - Name of Output File
+    */
+
+    public static void clusterOut(Point[] Points, int[] clusters, String fname) throws Exception { 
         PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fname)));
 
         int max = 0;
@@ -277,45 +313,51 @@ public class DTDBSCAN {
             out.println();
             out.println();
             out.println();
-            out.println();
-            out.println();
-            out.println();
         }
 
         out.close();
     }
 
+    /*
+    * This method outputs euclidian distance between points a and b
+    *   Parameter a and b - Points to have distance calculated
+    */
+
     public static double dist(Point a, Point b) { // Return euclidian distance between Points a and b
         return Math.pow(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2), 0.5);
     }
 
-    public static int[] morton_order(int K, int G) { // computes morton ordering of grid [*** No Change]
+    /*
+    * This method outputs Morton order (also known as Z-order) to facilitate with bucket merging process
+    *   Parameter K - number of grid spaces in the sqare grid
+    */
+
+    public static int[] morton_order(int K) { 
+
+        int[] moveType = new int[K + 1];
+
+        for(int i = 1; i <= (int)(Math.log(K)/Math.log(2)); i++)
+            for(int j = 0; j < K + 1; j += (int)Math.pow(2, i))
+                moveType[j]++;
+
         int[] morton_ordering = new int[2 * K];
-        int[] morton_number = new int[2 * G];
+        int x = 0;
+        int y = 0;
 
-        int a = 0;
-        int b = 0;
-
-        for (int i = 0; i < K; i++) {
-            morton_ordering[2 * i] = a;
-            morton_ordering[(2 * i) + 1] = b;
-            for (int k = 0; k < morton_number.length; k++) {
-                morton_number[k]++;
-                if (morton_number[k] > 1) {
-                    morton_number[k] = 0;
-                    if (k % 2 == 0)
-                        a = a - (int) Math.pow(2, (k / 2));
-                    else
-                        b = b - (int) Math.pow(2, ((k - 1) / 2));
-                } else {
-                    if (k % 2 == 0)
-                        a = a + (int) Math.pow(2, (k / 2));
-                    else
-                        b = b + (int) Math.pow(2, ((k - 1) / 2));
-                    break;
-                }
+        for(int i = 0; i < K; i++){
+            morton_ordering[2 * i] = x;
+            morton_ordering[(2 * i) + 1] = y;
+            if(moveType[i + 1] == 0){
+                x++;
+            } else if(moveType[i + 1] % 2 == 0){
+                x++;
+                y = y - (int) Math.pow(2, (int)(moveType[i + 1])/2) + 1;
+            } else {
+                y++;
+                x = x - (int) Math.pow(2, (int)(moveType[i + 1] + 1)/2) + 1;
             }
         }
+
         return morton_ordering;
     }
 }
