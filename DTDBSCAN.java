@@ -27,14 +27,28 @@ public class DTDBSCAN{
     }
 
     public static void main(String[] args) throws Exception {
+        
+        // Option 1: Generate Point set using dataGenerator method (for experimentation)
 
+        int N = 2000;                                                    // Set N as size of dataset
+        
+        int minPts = 10;
+        double epsilon = Math.sqrt(10000000.0/(Math.PI * N));
+
+        Point[] points = dataDgenerator(N, 1);                           // Set second variable to 0 for Uniform Distribution, 0.359 for r=2, 0.834 for r=10, 0.965 for r=50, and 1 for no noise
+
+        System.out.println(runClustering(points, N, epsilon, minPts));   // Run DTDBSCAN Clustering algorithm and output runtime in milliseconds
+
+        // Option 2: Generate Point set using coordinate information from data.in
+
+        /*         
+        
         BufferedReader f = new BufferedReader(new FileReader("data.in"));  // Read file data.in
 
-        // Option 1: Generate Point set using coordinate information from data.in
-
-        /*                                                                 
-
-        int N = Integer.parseInt(f.readLine());                            // Set N as size of dataset
+        int N = Integer.parseInt(f.readLine());   
+        int minPts = 10;
+        double epsilon = Math.sqrt(10000000.0/(Math.PI * N));
+        
         Point[] points = new Point[N];
 
         for (int i = 0; i < N; i++) {                                               
@@ -44,19 +58,10 @@ public class DTDBSCAN{
             points[i] = P;
         }
 
-        */
-
-        // Option 2: Generate Point set using dataGenerator method (for experimentation)
-
-        int N = 2000;                                                     // Set N as size of dataset
-
-        Point[] points = dataDgenerator(N, 0.2);                          // Set second variable to 0 for Uniform Distribution, 0.359 for r=2, 0.834 for r=10, 0.965 for r=50, and 1 for no noise
-
-        //Run Clustering
-
-        System.out.println(runClustering(points, N, Math.sqrt(1000000.0/(Math.PI * N)), 10));   // Run DTDBSCAN Clustering algorithm and output runtime in milliseconds
+        System.out.println(runClustering(points, N, epsilon, minPts));
 
         f.close();
+        */
     }
 
     /*
@@ -212,7 +217,7 @@ public class DTDBSCAN{
 
         finish = (int) System.currentTimeMillis();                                  // Measure Time Finish
 
-        clusterOut(points, clusters, "clusterDTDBSCAN.out");                     // Outputs clusters to clusterDTDBSCAN.out
+        clusterOut(points, clusters, "data.out");                                   // Outputs clusters to clusterDTDBSCAN.out
 
         return finish - start;
     }
@@ -302,16 +307,15 @@ public class DTDBSCAN{
         PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(fname)));
 
         int max = 0;
-        for (int i = 0; i < clusters.length; i++)
+        for (int i = 0; i < clusters.length; i++){
             if (clusters[i] > max)
                 max = clusters[i];
+        }
 
         for (int i = 0; i <= max; i++) {
             for (int j = 0; j < clusters.length; j++)
                 if (clusters[j] == i)
                     out.println("(" + Points[j].x + "," + Points[j].y + ")");
-            out.println();
-            out.println();
             out.println();
         }
 
