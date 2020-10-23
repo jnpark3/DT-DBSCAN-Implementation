@@ -27,4 +27,3 @@ DT-DBSCAN (Delaunay Triangulated DBSCAN)is an iteration of DBSCAN that aims to i
 
 * This algorithm is a part of a submission to PeerJ
 * **Note that this current iteration only works for data sets with 2D points. In addition, the algorithm operates if there are no two points with the same x and y coordinates.**
-# DT-DBSCAN-Implementation
